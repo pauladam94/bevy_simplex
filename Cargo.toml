@@ -9,6 +9,7 @@ edition = "2021"
 # dynamic_linking to delete for release
 bevy = { version = "0.13.2", features = ["dynamic_linking"] }
 # regex = { git = "https://github.com/rust-lang/regex.git" }
+# bevy = { git = "https://github.com/bevyengine/bevy.git" }
 bevy_egui = "0.27.0"
 bevy-inspector-egui = "0.24.0"
 

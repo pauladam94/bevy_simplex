@@ -20,7 +20,7 @@ fn main() {
         )
         .init_resource::<UiState>()
         .add_plugins(EguiPlugin)
-        .insert_resource(CustomMaterial::default())
+        // .insert_resource(CustomMaterial::default())
         .add_plugins(WorldInspectorPlugin::new())
         // .add_plugins(AssetInspectorPlugin::<CustomMaterial>::default())
         // .add_plugins(DefaultInspectorConfigPlugin::name)
@@ -46,6 +46,11 @@ fn move_camera(
         }
         if keyboard_input.pressed(KeyCode::ArrowRight) {
             material.1.camera -= 0.1;
+        }
+        if material.1.camera > 1.0 {
+            material.1.camera = 1.0
+        } else if material.1.camera < 0. {
+            material.1.camera = 0.
         }
         // if keyboard_input.pressed(KeyCode::ArrowLeft) {
         //     material.1.camera.x += 0.1;
@@ -82,10 +87,7 @@ fn setup(
     commands.spawn(MaterialMesh2dBundle {
         mesh: meshes.add(Rectangle::new(600., 600.)).into(),
         transform: Transform::default(),
-        material: materials.add(CustomMaterial {
-            camera: 0.0,
-        }),
-        // material: materials.add(shader_info),
+        material: materials.add(CustomMaterial { camera: 2.0 }),
         ..default()
     });
 }
