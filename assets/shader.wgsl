@@ -1,11 +1,12 @@
 #import bevy_sprite::mesh2d_vertex_output::VertexOutput
 
 struct CustomMaterial {
-    camera: f32
-}
+    x : f32,
+    y : f32,
+    z : f32
+};
 
-@group(0) @binding(0)
-var<uniform> material: CustomMaterial;
+@group(2) @binding(42) var<uniform> material: CustomMaterial;
 
 fn sdf_circle(pos: vec3<f32>, radius: f32, center: vec3<f32>) -> f32 {
     return length(pos - center) - radius;
@@ -87,7 +88,7 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     let color = ray_march(ray_origin, ray_direction);
 
     // return vec4(color, 1.0);
-    return vec4(material.camera, material.camera, material.camera, 1.);
+    return vec4(material.x, material.y, material.z,  1.);
 }
 
 // Half Space with this equation
