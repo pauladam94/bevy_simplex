@@ -11,7 +11,6 @@ use nom::IResult;
 pub type Variable = String;
 pub type Coefficient = f32;
 
-
 pub const GAP_VARIABLE_IDENTIFIER: char = 'ε';
 
 #[derive(Default, PartialEq, Debug, Clone)]
@@ -26,6 +25,11 @@ impl LinearFunction {
             constant,
             coefficients,
         }
+    }
+
+    /// Get the coefficient of a single variable
+    pub fn coefficient_var(&self, var: Variable) -> Option<Coefficient> {
+        self.coefficients.get(&var).copied()
     }
 
     /// Returns a linear function with value 0
@@ -144,7 +148,13 @@ impl LinearFunction {
     pub fn non_gap_variables(&self) -> Vec<Variable> {
         self.coefficients
             .iter()
-            .filter_map(|(var, _)| if !var.starts_with(GAP_VARIABLE_IDENTIFIER) { Some(var.to_string()) } else { None })
+            .filter_map(|(var, _)| {
+                if !var.starts_with(GAP_VARIABLE_IDENTIFIER) {
+                    Some(var.to_string())
+                } else {
+                    None
+                }
+            })
             .collect()
     }
 
@@ -413,10 +423,7 @@ impl std::str::FromStr for LinearFunction {
                 }
             };
 
-            Ok((
-                rest,
-                (variable, if positive { coeff } else { -coeff }),
-            ))
+            Ok((rest, (variable, if positive { coeff } else { -coeff })))
         }
 
         let mut linear_func = LinearFunction::zero();

@@ -10,6 +10,13 @@ pub struct Simplex {
 }
 
 impl Simplex {
+    pub fn first_simplex(&mut self) -> Option<LinearProgram> {
+        if self.historic.len() > 0 {
+            Some(self.historic[0].clone())
+        } else {
+            None
+        }
+    } 
     fn is_first_step(&self) -> bool {
         self.index == 0
     }

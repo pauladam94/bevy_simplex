@@ -33,6 +33,7 @@ fn ui_example_system(ui_state: ResMut<UiState>, mut contexts: EguiContexts) {
 fn move_camera(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut materials: ResMut<Assets<CustomMaterial>>,
+    mut ui_state: ResMut<UiState>,
 ) {
     for material in materials.iter_mut() {
         // println!("x : {}", material.1.camera);
@@ -65,6 +66,41 @@ fn move_camera(
         if keyboard_input.pressed(KeyCode::KeyZ) {
             material.1.z -= 0.1;
         }
+
+        if let Some(Ok(simplex)) = &mut ui_state.simplex {
+            if let Some(lin_prog) = simplex.first_simplex() {
+                let constraints = lin_prog.constraints;
+                // for constraint in constraints.iter() {
+                if let Some(coeff) = constraints[0].left.coefficient_var(String::from("x")) {
+                    material.1.x0 = coeff;
+                }
+                if let Some(coeff) = constraints[1].left.coefficient_var(String::from("x")) {
+                    material.1.x1 = coeff;
+                }
+                if let Some(coeff) = constraints[2].left.coefficient_var(String::from("x")) {
+                    material.1.x2 = coeff;
+                }
+                if let Some(coeff) = constraints[0].left.coefficient_var(String::from("y")) {
+                    material.1.y0 = coeff;
+                }
+                if let Some(coeff) = constraints[1].left.coefficient_var(String::from("y")) {
+                    material.1.y1 = coeff;
+                }
+                if let Some(coeff) = constraints[2].left.coefficient_var(String::from("y")) {
+                    material.1.y2 = coeff;
+                }
+                if let Some(coeff) = constraints[0].left.coefficient_var(String::from("z")) {
+                    material.1.z0 = coeff;
+                }
+                if let Some(coeff) = constraints[1].left.coefficient_var(String::from("z")) {
+                    material.1.z1 = coeff;
+                }
+                if let Some(coeff) = constraints[2].left.coefficient_var(String::from("z")) {
+                    material.1.z2 = coeff;
+                }
+            }
+        }
+
         println!(
             "x : {}, y : {}, z : {}",
             material.1.x, material.1.y, material.1.z
@@ -102,7 +138,23 @@ struct CustomMaterial {
     #[uniform(42)]
     z: f32,
     #[uniform(42)]
+    x0: f32,
+    #[uniform(42)]
+    y0: f32,
+    #[uniform(42)]
+    z0: f32,
+    #[uniform(42)]
     x1: f32,
+    #[uniform(42)]
+    y1: f32,
+    #[uniform(42)]
+    z1: f32,
+    #[uniform(42)]
+    x2: f32,
+    #[uniform(42)]
+    y2: f32,
+    #[uniform(42)]
+    z2: f32,
 }
 
 impl Material2d for CustomMaterial {

@@ -111,7 +111,7 @@ impl Constraints {
     pub fn maximize(&self, to_maximize: &LinearFunction) -> Result<Simplex, SimplexError> {
         let program = LinearProgram {
             linear_function: to_maximize.clone(),
-            constraints: self.clone()
+            constraints: self.clone(),
         };
 
         if program.is_unbounded() {
@@ -284,7 +284,9 @@ impl Constraints {
         let mut seen = vec![];
         let points_nearly_equal = |a: &Vec<f32>, b: &Vec<f32>| {
             for (a, b) in a.iter().zip(b) {
-                if (a - b).abs() <= 0.000001 { return true }
+                if (a - b).abs() <= 0.000001 {
+                    return true;
+                }
             }
             false
         };
@@ -363,7 +365,6 @@ impl std::ops::IndexMut<usize> for Constraints {
         &mut self.inner[index]
     }
 }
-
 
 impl std::fmt::Display for Operator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
