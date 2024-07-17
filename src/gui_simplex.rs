@@ -23,13 +23,37 @@ pub fn egui_ui(mut ui_state: ResMut<UiState>, ctx: &egui::Context) {
 
     egui::SidePanel::left("Simplex Panel").show(ctx, |ui| {
         ui.vertical(|ui| {
+            ui.add(
+                egui::Slider::new(&mut ui_state.camera.0, -1000.0..=1000.0)
+                    .text("x"),
+            );
+            ui.add(
+                egui::Slider::new(&mut ui_state.camera.1, -1000.0..=1000.0)
+                    .text("y"),
+            );
+            ui.add(
+                egui::Slider::new(&mut ui_state.camera.2, -1000.0..=10000.0)
+                    .text("z"),
+            );
+
             ui.heading("Linear Program");
             ui.horizontal(|ui| {
                 egui::ComboBox::from_label("")
-                    .selected_text((if ui_state.maximize { "MAX" } else { "MIN" }).to_string())
+                    .selected_text(
+                        (if ui_state.maximize { "MAX" } else { "MIN" })
+                            .to_string(),
+                    )
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut ui_state.maximize, true, "MAX");
-                        ui.selectable_value(&mut ui_state.maximize, false, "MIN");
+                        ui.selectable_value(
+                            &mut ui_state.maximize,
+                            true,
+                            "MAX",
+                        );
+                        ui.selectable_value(
+                            &mut ui_state.maximize,
+                            false,
+                            "MIN",
+                        );
                     });
                 ui.text_edit_singleline(&mut ui_state.function_input);
             });
@@ -37,7 +61,9 @@ pub fn egui_ui(mut ui_state: ResMut<UiState>, ctx: &egui::Context) {
 
             if ui.add(egui::Button::new("COMPILE")).clicked() {
                 // Parse constraints
-                let constraints = Constraints::compile(&mut ui_state.constraints_input).unwrap();
+                let constraints =
+                    Constraints::compile(&mut ui_state.constraints_input)
+                        .unwrap();
                 // Parse linear function
                 let function = ui_state
                     .function_input
@@ -45,20 +71,21 @@ pub fn egui_ui(mut ui_state: ResMut<UiState>, ctx: &egui::Context) {
                     .unwrap_or(LinearFunction::zero());
 
                 // Create simplex
-                ui_state.simplex = Some(constraints.maximize(&if ui_state.maximize {
-                    function
-                } else {
-                    -function
-                }));
+                ui_state.simplex =
+                    Some(constraints.maximize(&if ui_state.maximize {
+                        function
+                    } else {
+                        -function
+                    }));
             }
             match &ui_state.simplex {
                 Some(Ok(simplex)) => {
                     ui.heading("Values");
                     let values = simplex.current_values();
                     ui.label(
-                        values
-                            .iter()
-                            .fold(String::new(), |acc, (v, c)| format!("{acc}{v} = {c}\n")),
+                        values.iter().fold(String::new(), |acc, (v, c)| {
+                            format!("{acc}{v} = {c}\n")
+                        }),
                     );
 
                     ui.heading("State");
@@ -102,6 +129,8 @@ pub fn egui_ui(mut ui_state: ResMut<UiState>, ctx: &egui::Context) {
 
 #[derive(Resource)]
 pub struct UiState {
+    pub camera: (f32, f32, f32),
+
     pub maximize: bool,
 
     pub function_input: String,
@@ -114,6 +143,7 @@ pub struct UiState {
 impl Default for UiState {
     fn default() -> Self {
         Self {
+            camera: (0., 0., 0.),
             maximize: true,
             function_input: String::from("x + 6y + 13z"),
             constraints_input: String::from(

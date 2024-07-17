@@ -43,8 +43,11 @@ impl LinearProgram {
         let mut point = vec![0.0; variables.len()];
 
         for constraint in self.constraints.iter() {
-            if let Some(left_variable) = constraint.left.name_single_variable() {
-                if let Some(index) = variables.iter().position(|v| *v == left_variable) {
+            if let Some(left_variable) = constraint.left.name_single_variable()
+            {
+                if let Some(index) =
+                    variables.iter().position(|v| *v == left_variable)
+                {
                     point[index] = constraint.right.constant;
                 }
             }

@@ -1,9 +1,19 @@
 #import bevy_sprite::mesh2d_vertex_output::VertexOutput
 
 struct CustomMaterial {
-    x : f32,
-    y : f32,
-    z : f32
+    x: f32,
+    y: f32,
+    z: f32,
+    teta: f32,
+    x0: f32,
+    y0: f32,
+    z0: f32,
+    x1: f32,
+    y1: f32,
+    z1: f32,
+    x2: f32,
+    y2: f32,
+    z2: f32,
 };
 
 @group(2) @binding(42) var<uniform> material: CustomMaterial;
@@ -19,12 +29,20 @@ fn sdf_plane(p: vec3<f32>, a0: f32, a1: f32, a2: f32, a3: f32) -> f32 {
     return dot(normal, p) - a3;
 }
 
-fn sdf_simplex() -> f32 {
-    return 0.0;
+fn sdf_simplex(pos: vec3<f32>) -> f32 {
+    let d1 = sdf_plane(pos, -1., 0., 0., 0.);
+    let d2 = sdf_plane(pos, 0., -1., 0., 0.);
+    let d3 = sdf_plane(pos, 0., 0., -1., 0.);
+    let d4 = sdf_plane(pos, 1., 0., 0., 200.);
+    let d5 = sdf_plane(pos, 0., 1., 0., 300.);
+    let d6 = sdf_plane(pos, 1., 1., 1., 400.);
+    let d7 = sdf_plane(pos, 0., 1., 3., 600.);
+    return max(max(max(max(max(max(d1, d2), d3), d4), d5), d6), d7);
 }
 
 fn get_distance_from_world(pos: vec3<f32>) -> f32 {
-    return sdf_circle(pos, 0.3, vec3(0., 0., 0.));
+    return sdf_simplex(pos);
+    // return sdf_circle(pos, 0.3, vec3(0., 0., 0.));
 }
 
 fn calculate_normal(current_position: vec3<f32>) -> vec3<f32> {
@@ -77,28 +95,21 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     // let camera_origin = camera.position;
     // let camera_pos = vec3(0., 0., 0.);
     // let sdf = sdf_circle(mesh.world_position, 2.0, vec3(1., 1., 1.));
-    let posx = mesh.world_position.x / 255;
-    let posy = mesh.world_position.y / 255;
+    let posx = mesh.world_position.x / 300.;
+    let posy = mesh.world_position.y / 300.;
 
-    let ray_origin = vec3(0., 0., 1.);
-    // let ray_origin = vec3(material.camera.r, material.y, material.z);
+    // let ray_origin = vec3(0., 0., 1.);
+    let ray_origin = vec3(material.x, material.y, material.z);
 
     let ray_direction = vec3(posx, posy, -1.);
 
     let color = ray_march(ray_origin, ray_direction);
 
-    // return vec4(color, 1.0);
-    return vec4(material.x, material.y, material.z,  1.);
+    return vec4(color, 1.0);
+    // return vec4(posx, posy, 0.,  1.);
+    // return vec4(posx, posy, 0.,  1.);
 }
 
-// Half Space with this equation
-// a0*x + a1*y + a2*z <= a3
-// float sdPlane (vec3 p, float a0, float a1, float a2, float a3) {
-//     vec3 normal = normalize(vec3(a0,a1,a2));
-//     float d = dot(normal,p) - a3;
-//     return d;
-// }
-// 
 // float sdf(vec3 p){
 //  float d1 = sdPlane(p, -1., 0., 0., 0.);
 //  float d2 = sdPlane(p, 0., -1., 0., 0.);
