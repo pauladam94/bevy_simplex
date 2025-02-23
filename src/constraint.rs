@@ -1,9 +1,10 @@
 //! contraintes linéaire
+use crate::linear_function::GAP_VARIABLE_IDENTIFIER;
 use crate::linear_function::LinearFunction;
 use crate::linear_function::Variable;
-use crate::linear_function::GAP_VARIABLE_IDENTIFIER;
 use crate::{LinearProgram, Simplex, SimplexError};
 use itertools::Itertools;
+use nom::Parser;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::anychar;
@@ -73,7 +74,11 @@ impl Constraint {
     /// let n = Constraint::new(lhs, op, rhs);
     /// assert_eq!(n, expected)
     /// ```
-    pub fn new(left: LinearFunction, operator: Operator, right: LinearFunction) -> Constraint {
+    pub fn new(
+        left: LinearFunction,
+        operator: Operator,
+        right: LinearFunction,
+    ) -> Constraint {
         Constraint {
             left,
             operator,
@@ -94,7 +99,8 @@ impl Constraint {
     }
 
     pub fn non_gap_variables(&self) -> Vec<Variable> {
-        let mut var_set: HashSet<Variable> = HashSet::from_iter(self.right.non_gap_variables());
+        let mut var_set: HashSet<Variable> =
+            HashSet::from_iter(self.right.non_gap_variables());
         for var in self.left.non_gap_variables() {
             var_set.insert(var);
         }
@@ -108,7 +114,10 @@ impl Constraints {
         Constraints { inner: Vec::new() }
     }
 
-    pub fn maximize(&self, to_maximize: &LinearFunction) -> Result<Simplex, SimplexError> {
+    pub fn maximize(
+        &self,
+        to_maximize: &LinearFunction,
+    ) -> Result<Simplex, SimplexError> {
         let program = LinearProgram {
             linear_function: to_maximize.clone(),
             constraints: self.clone(),
@@ -217,7 +226,8 @@ impl Constraints {
             .enumerate()
             .filter(|(_, c)| c.right.contains(var) && c.right[var] <= 0.0)
             .max_by(
-                |(_, Constraint { right: a, .. }), (_, Constraint { right: b, .. })| {
+                |(_, Constraint { right: a, .. }),
+                 (_, Constraint { right: b, .. })| {
                     let restriction_a = a.constant / a[var];
                     let restriction_b = b.constant / b[var];
                     restriction_a.total_cmp(&restriction_b)
@@ -259,7 +269,11 @@ impl Constraints {
         var_set.into_iter().collect()
     }
 
-    fn replace_variable_with(&mut self, var: &Variable, value: &LinearFunction) {
+    fn replace_variable_with(
+        &mut self,
+        var: &Variable,
+        value: &LinearFunction,
+    ) {
         for Constraint { right, .. } in &mut self.inner {
             right.replace(var, value)
         }
@@ -274,7 +288,9 @@ impl Constraints {
         let dummy_program = LinearProgram {
             linear_function: LinearFunction::new(
                 0.0,
-                HashMap::from_iter(variables.iter().map(|v| (v.to_string(), 1.0))),
+                HashMap::from_iter(
+                    variables.iter().map(|v| (v.to_string(), 1.0)),
+                ),
             ),
             constraints: self.clone(),
         };
@@ -450,7 +466,7 @@ impl std::str::FromStr for Constraint {
             tag::<&str, &str, ()>("<"),
             tag::<&str, &str, ()>(">"),
         ));
-        if let Ok((rhs, (lhs, op))) = many_till(anychar, parse_op)(s) {
+        if let Ok((rhs, (lhs, op))) = many_till(anychar, parse_op).parse(s) {
             let lhs = lhs
                 .iter()
                 .fold(String::new(), |acc, c| acc + &c.to_string());
@@ -607,22 +623,34 @@ mod tests {
 
         let lhs = LinearFunction::new(
             30f32,
-            HashMap::from([(String::from("x"), 32f32), (String::from("z"), -5f32)]),
+            HashMap::from([
+                (String::from("x"), 32f32),
+                (String::from("z"), -5f32),
+            ]),
         );
         let rhs = LinearFunction::new(
             -5f32,
-            HashMap::from([(String::from("y"), 12f32), (String::from("z"), 5f32)]),
+            HashMap::from([
+                (String::from("y"), 12f32),
+                (String::from("z"), 5f32),
+            ]),
         );
         let op = Operator::LessEqual;
         let expected = Constraint {
             left: LinearFunction::new(
                 30f32,
-                HashMap::from([(String::from("x"), 32f32), (String::from("z"), -5f32)]),
+                HashMap::from([
+                    (String::from("x"), 32f32),
+                    (String::from("z"), -5f32),
+                ]),
             ),
             operator: Operator::LessEqual,
             right: LinearFunction::new(
                 -5f32,
-                HashMap::from([(String::from("y"), 12f32), (String::from("z"), 5f32)]),
+                HashMap::from([
+                    (String::from("y"), 12f32),
+                    (String::from("z"), 5f32),
+                ]),
             ),
         };
         let n = Constraint::new(lhs, op, rhs);
@@ -631,8 +659,10 @@ mod tests {
 
     #[test]
     fn test_normalize() {
-        let mut constraints =
-            Constraints::compile("x - 2y >= 6 \n 12 + 9x + 3y <= 6\n 1 + 7x - y <= 0").unwrap();
+        let mut constraints = Constraints::compile(
+            "x - 2y >= 6 \n 12 + 9x + 3y <= 6\n 1 + 7x - y <= 0",
+        )
+        .unwrap();
         constraints.normalize(&"y".to_string());
 
         assert_eq!(constraints.inner[0].right[&"y".to_string()], 1.0);
@@ -646,7 +676,10 @@ mod tests {
         use std::str::FromStr;
 
         let mut c = Constraint::from_str("0 = 200 - x - y").unwrap();
-        let l_f = LinearFunction::new(0f32, HashMap::from([(String::from("x"), -1f32)]));
+        let l_f = LinearFunction::new(
+            0f32,
+            HashMap::from([(String::from("x"), -1f32)]),
+        );
 
         let expected = Constraint::from_str("x = 200 - y + 0x").unwrap();
         c -= l_f;

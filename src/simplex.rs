@@ -1,7 +1,7 @@
-use crate::linear_programm::LinearProgram;
-use crate::Variable;
 use crate::Coefficient;
+use crate::Variable;
 use crate::error::SimplexError;
+use crate::linear_programm::LinearProgram;
 
 #[derive(Debug, Clone)]
 pub struct Simplex {
@@ -16,12 +16,15 @@ impl Simplex {
         } else {
             None
         }
-    } 
+    }
     fn is_first_step(&self) -> bool {
         self.index == 0
     }
 
-    pub fn next_step(&mut self, use_bland_rule: bool) -> Result<(), SimplexError> {
+    pub fn next_step(
+        &mut self,
+        use_bland_rule: bool,
+    ) -> Result<(), SimplexError> {
         if let Some(var) = self
             .current_state()
             .linear_function

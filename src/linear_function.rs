@@ -1,12 +1,13 @@
+use nom::Parser;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{alpha1, alphanumeric0, multispace0};
 use std::collections::HashMap;
 
+use nom::IResult;
 use nom::multi::many0;
 use nom::number::complete::float;
 use nom::sequence::preceded;
-use nom::IResult;
 
 pub type Variable = String;
 pub type Coefficient = f32;
@@ -20,7 +21,10 @@ pub struct LinearFunction {
 }
 impl LinearFunction {
     /// Creates a new linear function with the given constant and coefficients
-    pub fn new(constant: f32, coefficients: HashMap<Variable, Coefficient>) -> LinearFunction {
+    pub fn new(
+        constant: f32,
+        coefficients: HashMap<Variable, Coefficient>,
+    ) -> LinearFunction {
         LinearFunction {
             constant,
             coefficients,
@@ -46,7 +50,10 @@ impl LinearFunction {
     }
 
     /// Creates a new linear function containing a single variable with a predefinite coefficient
-    pub fn single_variable_with_coeff(var: Variable, coeff: f32) -> LinearFunction {
+    pub fn single_variable_with_coeff(
+        var: Variable,
+        coeff: f32,
+    ) -> LinearFunction {
         LinearFunction {
             constant: 0f32,
             coefficients: HashMap::from([(var, coeff)]),
@@ -95,8 +102,12 @@ impl LinearFunction {
     }
 
     /// Returns the first variable with a positive coefficient
-    pub fn first_positive_coefficient(&self, ordered: bool) -> Option<Variable> {
-        let mut coeffs = self.coefficients.clone().into_iter().collect::<Vec<_>>();
+    pub fn first_positive_coefficient(
+        &self,
+        ordered: bool,
+    ) -> Option<Variable> {
+        let mut coeffs =
+            self.coefficients.clone().into_iter().collect::<Vec<_>>();
         if ordered {
             coeffs.sort_by_key(|(v, _)| v.clone())
         }
@@ -125,9 +136,9 @@ impl LinearFunction {
         self.coefficients.keys().filter(|var| self[var] != 0.0)
     }
     pub fn into_var_iter(self) -> impl Iterator<Item = Variable> {
-        self.coefficients
-            .into_iter()
-            .filter_map(|(var, coeff)| if coeff != 0.0 { Some(var) } else { None })
+        self.coefficients.into_iter().filter_map(|(var, coeff)| {
+            if coeff != 0.0 { Some(var) } else { None }
+        })
     }
 
     pub fn is_one_normalized_var(&self) -> bool {
@@ -374,9 +385,13 @@ impl std::str::FromStr for LinearFunction {
     /// assert_eq!("3 - 2x".parse::<LinearFunction>().unwrap(), expected)
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        fn parse_variable(input: &str) -> IResult<&str, (Variable, Coefficient)> {
+        fn parse_variable(
+            input: &str,
+        ) -> IResult<&str, (Variable, Coefficient)> {
             let (rest, positive) = if let Ok((rest, sign)) =
-                preceded(multispace0::<&str, ()>, alt((tag("-"), tag("+"))))(input)
+                preceded(multispace0::<&str, ()>, alt((tag("-"), tag("+"))))
+                    .parse(input)
+            // NOTE : add of `.parse`
             {
                 (rest, sign == "+")
             } else {
@@ -384,50 +399,56 @@ impl std::str::FromStr for LinearFunction {
             };
 
             let mut found_coeff = false;
-            let (rest, coeff) =
-                if let Ok((rest, coeff)) = preceded(multispace0::<&str, ()>, float)(rest) {
-                    found_coeff = true;
-                    (rest, coeff)
-                } else {
-                    (rest, 1.0)
+            let (rest, coeff) = if let Ok((rest, coeff)) =
+                preceded(multispace0::<&str, ()>, float).parse(rest)
+            {
+                found_coeff = true;
+                (rest, coeff)
+            } else {
+                (rest, 1.0)
+            };
+
+            let rest =
+                match preceded(multispace0::<&str, ()>, tag("*")).parse(rest) {
+                    Ok((rest_mult, _)) => rest_mult,
+                    _ => rest,
                 };
 
-            let rest = match preceded(multispace0::<&str, ()>, tag("*"))(rest) {
-                Ok((rest_mult, _)) => rest_mult,
-                _ => rest,
-            };
-
-            let (rest, variable) = match preceded(multispace0::<&str, ()>, alpha1)(rest) {
-                Ok((rest, variable)) => {
-                    let (rest, variable) = match alphanumeric0::<&str, ()>(rest) {
-                        Ok((rest, end_of_var)) => {
-                            let mut var = variable.to_owned();
-                            var += end_of_var;
-                            (rest, var)
-                        }
-                        _ => {
-                            return Err(nom::Err::Error(nom::error::Error {
-                                input: "aled",
-                                code: nom::error::ErrorKind::Fail,
-                            }))
-                        }
-                    };
-                    (rest, variable)
-                }
-                Err(_) if found_coeff => (rest, "".to_string()),
-                _ => {
-                    return Err(nom::Err::Error(nom::error::Error {
-                        input: "aled",
-                        code: nom::error::ErrorKind::Fail,
-                    }))
-                }
-            };
+            let (rest, variable) =
+                match preceded(multispace0::<&str, ()>, alpha1).parse(rest) {
+                    Ok((rest, variable)) => {
+                        let (rest, variable) =
+                            match alphanumeric0::<&str, ()>(rest) {
+                                Ok((rest, end_of_var)) => {
+                                    let mut var = variable.to_owned();
+                                    var += end_of_var;
+                                    (rest, var)
+                                }
+                                _ => {
+                                    return Err(nom::Err::Error(
+                                        nom::error::Error {
+                                            input: "aled",
+                                            code: nom::error::ErrorKind::Fail,
+                                        },
+                                    ));
+                                }
+                            };
+                        (rest, variable)
+                    }
+                    Err(_) if found_coeff => (rest, "".to_string()),
+                    _ => {
+                        return Err(nom::Err::Error(nom::error::Error {
+                            input: "aled",
+                            code: nom::error::ErrorKind::Fail,
+                        }));
+                    }
+                };
 
             Ok((rest, (variable, if positive { coeff } else { -coeff })))
         }
 
         let mut linear_func = LinearFunction::zero();
-        let (_, variables) = many0(parse_variable)(s).unwrap();
+        let (_, variables) = many0(parse_variable).parse(s).unwrap();
         for (var, coeff) in variables {
             if var.is_empty() {
                 linear_func.constant += coeff;
@@ -488,7 +509,8 @@ mod tests {
 
     #[test]
     fn test_single_variable_with_coeff() {
-        let single_variable_lf = LinearFunction::single_variable_with_coeff("x".to_string(), 32f32);
+        let single_variable_lf =
+            LinearFunction::single_variable_with_coeff("x".to_string(), 32f32);
         let expected = LinearFunction::from_str("32x").unwrap();
 
         assert_eq!(single_variable_lf, expected);
@@ -538,7 +560,10 @@ mod tests {
         let lf = LinearFunction::from_str("3 x0+ 2   y").unwrap();
         let expected = LinearFunction {
             constant: 0.0,
-            coefficients: HashMap::from([(String::from("x0"), 3.0), (String::from("y"), 2.0)]),
+            coefficients: HashMap::from([
+                (String::from("x0"), 3.0),
+                (String::from("y"), 2.0),
+            ]),
         };
         assert_eq!(lf, expected);
     }

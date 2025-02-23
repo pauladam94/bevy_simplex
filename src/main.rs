@@ -1,14 +1,13 @@
 use bevy::prelude::*;
-use bevy::sprite::MaterialMesh2dBundle;
+use bevy::render::render_resource::AsBindGroup;
 use bevy::{
-    reflect::TypePath,
-    render::render_resource::{AsBindGroup, ShaderRef},
+    render::render_resource::ShaderRef,
     sprite::{Material2d, Material2dPlugin},
 };
 use bevy_egui::{EguiContexts, EguiPlugin};
 // use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_simplex::gui_simplex::egui_ui;
 use bevy_simplex::gui_simplex::UiState;
+use bevy_simplex::gui_simplex::egui_ui;
 
 fn main() {
     App::new()
@@ -121,13 +120,13 @@ fn setup(
     mut materials: ResMut<Assets<CustomMaterial>>,
     // shader_info: Res<CustomMaterial>,
 ) {
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::new(600., 600.)).into(),
-        material: materials.add(CustomMaterial::default()),
-        ..default()
-    });
+    // commands.spawn(MaterialMesh2dBundle {
+    //     mesh: meshes.add(Rectangle::new(600., 600.)).into(),
+    //     material: materials.add(CustomMaterial::default()),
+    //     ..default()
+    // });
 
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d::default());
 }
 
 // This is the struct that will be passed to your shader
