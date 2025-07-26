@@ -1,3 +1,4 @@
+use bevy::prelude::Mesh2d;
 use bevy::prelude::*;
 use bevy::render::render_resource::AsBindGroup;
 use bevy::{
@@ -120,15 +121,13 @@ fn setup(
     mut materials: ResMut<Assets<CustomMaterial>>,
     // shader_info: Res<CustomMaterial>,
 ) {
-    // commands.spawn(MaterialMesh2dBundle {
-    //     mesh: meshes.add(Rectangle::new(600., 600.)).into(),
-    //     material: materials.add(CustomMaterial::default()),
-    //     ..default()
-    // });
+    commands.spawn((
+        Mesh2d(meshes.add(Rectangle::new(1000., 1000.))),
+        MeshMaterial2d(materials.add(CustomMaterial::default())),
+    ));
 
     commands.spawn(Camera2d::default());
 }
-
 // This is the struct that will be passed to your shader
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone, Default)]
 struct CustomMaterial {
